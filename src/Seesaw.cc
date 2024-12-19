@@ -1,29 +1,6 @@
 #include <Seesaw.h>
 
-bool Seesaw_RotaryEncoder::_id_set = false;
-char Seesaw_RotaryEncoder::_id[I2CIP_ID_SIZE];
-
-void Seesaw_RotaryEncoder::loadID() {
-  uint8_t idlen = strlen_P(i2cip_seesaw_rotaryencoder_id_progmem);
-
-  // Read in PROGMEM
-  for (uint8_t k = 0; k < idlen; k++) {
-    char c = pgm_read_byte_near(i2cip_seesaw_rotaryencoder_id_progmem + k);
-    Seesaw_RotaryEncoder::_id[k] = c;
-  }
-
-  Seesaw_RotaryEncoder::_id[idlen] = '\0';
-  Seesaw_RotaryEncoder::_id_set = true;
-
-  #ifdef I2CIP_DEBUG_SERIAL
-    DEBUG_DELAY();
-    I2CIP_DEBUG_SERIAL.print(F("Seesaw RotaryEncoder ID Loaded: '"));
-    I2CIP_DEBUG_SERIAL.print(Seesaw_RotaryEncoder::_id);
-    I2CIP_DEBUG_SERIAL.print(F("' @"));
-    I2CIP_DEBUG_SERIAL.println((uintptr_t)(&Seesaw_RotaryEncoder::_id[0]), HEX);
-    DEBUG_DELAY();
-  #endif
-}
+I2CIP_DEVICE_INIT_STATIC_ID(_Seesaw, I2CIP_SEESAW_ID)
 
 // Seesaw::Seesaw(const i2cip_fqa_t& fqa, const i2cip_id_t& id) : Device(fqa, id), InputInterface<state_seesaw_t, args_seesaw_t>((Device*)this) { }
 
