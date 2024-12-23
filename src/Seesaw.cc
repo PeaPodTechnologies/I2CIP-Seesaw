@@ -1,6 +1,10 @@
 #include <Seesaw.h>
 
-I2CIP_DEVICE_INIT_STATIC_ID(_Seesaw, I2CIP_SEESAW_ID)
+#define ROTARYENCODER_DEFAULT_CACHE { .button = PIN_UNDEF, .encoder = 0 }
+
+I2CIP_DEVICE_INIT_STATIC_ID(_Seesaw, I2CIP_SEESAW_ID);
+I2CIP_INPUT_INIT_RESET(Seesaw_RotaryEncoder, i2cip_rotaryencoder_t, ROTARYENCODER_DEFAULT_CACHE, void*, nullptr);
+I2CIP_OUTPUT_INIT_FAILSAFE(Seesaw_RotaryEncoder, void*, nullptr, void*, nullptr); // Outputs are NOP (Return software error)
 
 // Seesaw::Seesaw(const i2cip_fqa_t& fqa, const i2cip_id_t& id) : Device(fqa, id), InputInterface<state_seesaw_t, args_seesaw_t>((Device*)this) { }
 

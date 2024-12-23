@@ -284,12 +284,13 @@ typedef struct {
 } i2cip_rotaryencoder_t;
 
 class Seesaw_RotaryEncoder : public Seesaw<i2cip_rotaryencoder_t, void*, void*, void*> {
-  I2CIP_INPUT_USE_TOSTRING(i2cip_rotaryencoder_t, "\"button\":%d,\"encoder\":%d")
-  I2CIP_INPUT_ADD_PRINTCACHE(i2cip_rotaryencoder_t, "Button: %d, Encoder: %d")
+  I2CIP_INPUT_USE_TOSTRING(i2cip_rotaryencoder_t, "\"button\":%d,\"encoder\":%d");
+  I2CIP_INPUT_ADD_PRINTCACHE(i2cip_rotaryencoder_t, "Button: %d, Encoder: %d");
+  I2CIP_INPUT_USE_RESET(i2cip_rotaryencoder_t, void*, void* const);
+  I2CIP_OUTPUT_USE_FAILSAFE(void*, void*, void* const);
   private:
     bool initialized = false;
 
-    void* const is_null = nullptr;
     const uint8_t encoder;
   public:
     // Seesaw_RotaryEncoder(uint8_t encoder, const i2cip_fqa_t& fqa, const i2cip_id_t& id) : Seesaw<i2cip_rotaryencoder_t, void*, void*, void*>(fqa, id), encoder(encoder) { removeOutput(); }
@@ -300,16 +301,8 @@ class Seesaw_RotaryEncoder : public Seesaw<i2cip_rotaryencoder_t, void*, void*, 
     static Device* factory(i2cip_fqa_t fqa) { return (Device*)(new Seesaw_RotaryEncoder(fqa)); }
     
     i2cip_errorlevel_t set(void* const& value, void* const& args) override { return I2CIP_ERR_HARD; } // You're clearly new here
-    void* const& getDefaultB(void) const override { return is_null; }
-    void resetFailsafe(void) override { return; } // No output
 
     i2cip_errorlevel_t get(i2cip_rotaryencoder_t& value, void* const& args) override;
-    void* const& getDefaultA(void) const override { return is_null; }
-
-    void clearCache(void) override { setCache({.button = PIN_UNDEF, .encoder = 0}); } // No output
-
-    // static Device* rotaryEncoderFactory(const i2cip_fqa_t& fqa, const i2cip_id_t& id) { loadID(); return new Seesaw_RotaryEncoder(fqa, id); }
-    // static Device* rotaryEncoderFactory(const i2cip_fqa_t& fqa) { loadID(); return new Seesaw_RotaryEncoder(fqa, _id); }
 };
 
 #endif
