@@ -6,25 +6,11 @@
 
 // MACROS
 
-// Registers
-// #define Seesaw_MEAS_HIGHREP_STRETCH  (uint16_t)0x2C06  // Measurement High Repeatability with Clock Stretch Enabled
-// #define Seesaw_MEAS_MEDREP_STRETCH   (uint16_t)0x2C0D  // Measurement Medium Repeatability with Clock Stretch Enabled
-// #define Seesaw_MEAS_LOWREP_STRETCH   (uint16_t)0x2C10  // Measurement Low Repeatability with Clock Stretch Enabled
-// #define Seesaw_MEAS_HIGHREP          (uint16_t)0x2400  // Measurement High Repeatability with Clock Stretch Disabled
-// #define Seesaw_MEAS_MEDREP           (uint16_t)0x240B  // Measurement Medium Repeatability with Clock Stretch Disabled
-// #define Seesaw_MEAS_LOWREP           (uint16_t)0x2416  // Measurement Low Repeatability with Clock Stretch Disabled
-// #define Seesaw_READSTATUS            (uint16_t)0xF32D  // Read Out of Status Register
-// #define Seesaw_CLEARSTATUS           (uint16_t)0x3041  // Clear Status
-// #define Seesaw_SOFTRESET             (uint16_t)0x30A2  // Soft Reset
-// #define Seesaw_HEATEREN              (uint16_t)0x306D  // Heater Enable
-// #define Seesaw_HEATERDIS             (uint16_t)0x3066  // Heater Disable
-// #define Seesaw_REG_HEATER_BIT        (uint16_t)0x000d  // Status Register Heater Bit
-
 // Settings
 // #define I2CIP_SEESAW_ADDRESS 0x49 // Default
 // #define I2CIP_SEESAW_ADDRESS 0x32 // Default
 #define I2CIP_SEESAW_ADDRESS 0x36 // Default
-#define I2CIP_SEESAW_DELAY 10 // Write/Read Sensing Delay
+#define I2CIP_SEESAW_DELAY 1000 // Micros
 
 /** Module Base Addreses
  *  The module base addresses for different seesaw modules.
@@ -237,6 +223,16 @@ class _Seesaw : public I2CIP::Device {
   I2CIP_DEVICE_USE_STATIC_ID()
   protected:
     _Seesaw(const i2cip_fqa_t& fqa) : I2CIP::Device(fqa, getStaticID()) { }
+
+    static i2cip_errorlevel_t setGPIOPinMode(const i2cip_fqa_t& fqa, uint8_t pin, uint8_t mode, bool setbus = false);
+    static i2cip_errorlevel_t setEncoderInterrupt(const i2cip_fqa_t& fqa, uint8_t encoder, bool enabled = true, bool setbus = false);
+    static i2cip_errorlevel_t setGPIOInterrupts(const i2cip_fqa_t& fqa, uint32_t mask, bool enabled = true, bool setbus = false); // (uint32_t)1 << SS_SWITCH, 1
+
+
+    static i2cip_errorlevel_t getEncoderPosition(const i2cip_fqa_t& fqa, int32_t& dest, uint8_t encoder, bool setbus = false, bool resetbus = false);
+    // i2cip_errorlevel_t getGPIO(uint64_t& dest, bool setbus = false, bool resetbus = false);
+    static i2cip_errorlevel_t getGPIO(const i2cip_fqa_t& fqa, uint32_t& dest, bool setbus = false, bool resetbus = false);
+    static i2cip_errorlevel_t getGPIOPin(const i2cip_fqa_t& fqa, i2cip_state_pin_t& dest, uint8_t pin, bool setbus = false, bool resetbus = false);
 };
 
 // Interface class for the Seesaw air temperature and humidity sensor
@@ -252,15 +248,6 @@ template <typename G, typename A, typename S, typename B> class Seesaw : public 
     #endif
 
   protected:
-    i2cip_errorlevel_t setGPIOPinMode(uint8_t pin, uint8_t mode, bool setbus = false);
-    i2cip_errorlevel_t setEncoderInterrupt(uint8_t encoder, bool enabled = true, bool setbus = false);
-    i2cip_errorlevel_t setGPIOInterrupts(uint32_t mask, bool enabled = true, bool setbus = false); // (uint32_t)1 << SS_SWITCH, 1
-
-
-    i2cip_errorlevel_t getEncoderPosition(int32_t& dest, uint8_t encoder, bool setbus = false, bool resetbus = false);
-    // i2cip_errorlevel_t getGPIO(uint64_t& dest, bool setbus = false, bool resetbus = false);
-    i2cip_errorlevel_t getGPIO(uint32_t& dest, bool setbus = false, bool resetbus = false);
-    i2cip_errorlevel_t getGPIOPin(i2cip_state_pin_t& dest, uint8_t pin, bool setbus = false, bool resetbus = false);
     
     Seesaw(const i2cip_fqa_t& fqa) : _Seesaw(fqa), IOInterface<G, A, S, B>((Device*)this) { }
   public:
@@ -278,20 +265,22 @@ template <typename G, typename A, typename S, typename B> class Seesaw : public 
     // static const char* getStaticIDBuffer() { return Seesaw::_id_set ? Seesaw::_id : nullptr; }
 };
 
-typedef struct {
+extern struct i2cip_rotaryencoder_s {
   i2cip_state_pin_t button;
   int32_t encoder;
-} i2cip_rotaryencoder_t;
+} _i2cip_rotaryencoder_default;
+
+typedef struct i2cip_rotaryencoder_s i2cip_rotaryencoder_t;
 
 class Seesaw_RotaryEncoder : public Seesaw<i2cip_rotaryencoder_t, void*, void*, void*> {
-  I2CIP_INPUT_USE_TOSTRING(i2cip_rotaryencoder_t, "\"button\":%d,\"encoder\":%d");
-  I2CIP_INPUT_ADD_PRINTCACHE(i2cip_rotaryencoder_t, "Button: %d, Encoder: %d");
+  I2CIP_INPUT_USE_TOSTRING(i2cip_rotaryencoder_t, "\"button\":%c,\"encoder\":%d");
+  I2CIP_INPUT_ADD_PRINTCACHE(i2cip_rotaryencoder_t, "Button: %c, Encoder: %d");
   I2CIP_INPUT_USE_RESET(i2cip_rotaryencoder_t, void*, void* const);
   I2CIP_OUTPUT_USE_FAILSAFE(void*, void*, void* const);
   private:
     bool initialized = false;
 
-    const uint8_t encoder;
+    const uint8_t encoder = 0;
   public:
     // Seesaw_RotaryEncoder(uint8_t encoder, const i2cip_fqa_t& fqa, const i2cip_id_t& id) : Seesaw<i2cip_rotaryencoder_t, void*, void*, void*>(fqa, id), encoder(encoder) { removeOutput(); }
     Seesaw_RotaryEncoder(uint8_t encoder, const i2cip_fqa_t& fqa) : Seesaw<i2cip_rotaryencoder_t, void*, void*, void*>(fqa), encoder(encoder) { removeOutput(); }
@@ -305,6 +294,6 @@ class Seesaw_RotaryEncoder : public Seesaw<i2cip_rotaryencoder_t, void*, void*, 
     i2cip_errorlevel_t get(i2cip_rotaryencoder_t& value, void* const& args) override;
 };
 
-#endif
-
 #include <Seesaw.tpp>
+
+#endif
