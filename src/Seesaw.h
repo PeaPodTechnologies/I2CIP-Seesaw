@@ -219,10 +219,10 @@ using namespace I2CIP;
 #define I2CIP_SEESAW_ID "SEESAW"
 
 
-class _Seesaw : public I2CIP::Device {
+class Seesaw : public I2CIP::Device {
   I2CIP_DEVICE_USE_STATIC_ID()
   protected:
-    _Seesaw(const i2cip_fqa_t& fqa) : I2CIP::Device(fqa, getStaticID()) { }
+    Seesaw(const i2cip_fqa_t& fqa) : I2CIP::Device(fqa, getStaticID()) { }
 
     static i2cip_errorlevel_t setGPIOPinMode(const i2cip_fqa_t& fqa, uint8_t pin, uint8_t mode, bool setbus = false);
     static i2cip_errorlevel_t setEncoderInterrupt(const i2cip_fqa_t& fqa, uint8_t encoder, bool enabled = true, bool setbus = false);
@@ -233,37 +233,12 @@ class _Seesaw : public I2CIP::Device {
     // i2cip_errorlevel_t getGPIO(uint64_t& dest, bool setbus = false, bool resetbus = false);
     static i2cip_errorlevel_t getGPIO(const i2cip_fqa_t& fqa, uint32_t& dest, bool setbus = false, bool resetbus = false);
     static i2cip_errorlevel_t getGPIOPin(const i2cip_fqa_t& fqa, i2cip_state_pin_t& dest, uint8_t pin, bool setbus = false, bool resetbus = false);
-};
 
-// Interface class for the Seesaw air temperature and humidity sensor
-template <typename G, typename A, typename S, typename B> class Seesaw : public _Seesaw, public IOInterface<G, A, S, B> {
-  private:
-    // static bool _id_set;
-    // static char _id[];
-
-    // Seesaw(const i2cip_fqa_t& fqa) : Seesaw(fqa, _id) { loadID(); }
-
-    #ifdef MAIN_CLASS_NAME
-    friend class MAIN_CLASS_NAME;
-    #endif
-
-  protected:
-    
-    Seesaw(const i2cip_fqa_t& fqa) : _Seesaw(fqa), IOInterface<G, A, S, B>((Device*)this) { }
   public:
-    // static void loadID(void);
-
-    // static Device* seesawFactory(const i2cip_fqa_t& fqa, const i2cip_id_t& id);
-    // static Device* seesawFactory(const i2cip_fqa_t& fqa);
-    
-    // i2cip_errorlevel_t get(state_seesaw_t& value, const args_seesaw_t& args) override;
-
-    // const args_seesaw_t& getDefaultA(void) const override;
-    // void clearCache(void) override;
-
-    // static const char* getStaticIDBuffer() { return Seesaw::_id; }
-    // static const char* getStaticIDBuffer() { return Seesaw::_id_set ? Seesaw::_id : nullptr; }
+    static uint32_t _encoderDegrees(const int32_t& encoder, const uint32_t& _max = 360);
 };
+
+#define I2CIP_SEESAW_ROTARY_TICKS 24
 
 extern struct i2cip_rotaryencoder_s {
   i2cip_state_pin_t button;
@@ -272,28 +247,21 @@ extern struct i2cip_rotaryencoder_s {
 
 typedef struct i2cip_rotaryencoder_s i2cip_rotaryencoder_t;
 
-class Seesaw_RotaryEncoder : public Seesaw<i2cip_rotaryencoder_t, void*, void*, void*> {
+class RotaryEncoder : public Seesaw, public InputInterface<i2cip_rotaryencoder_t, void*> {
   I2CIP_INPUT_USE_TOSTRING(i2cip_rotaryencoder_t, "\"button\":%c,\"encoder\":%d");
   I2CIP_INPUT_ADD_PRINTCACHE(i2cip_rotaryencoder_t, "Button: %c, Encoder: %d");
   I2CIP_INPUT_USE_RESET(i2cip_rotaryencoder_t, void*, void* const);
-  I2CIP_OUTPUT_USE_FAILSAFE(void*, void*, void* const);
-  private:
-    bool initialized = false;
-
-    const uint8_t encoder = 0;
   public:
-    // Seesaw_RotaryEncoder(uint8_t encoder, const i2cip_fqa_t& fqa, const i2cip_id_t& id) : Seesaw<i2cip_rotaryencoder_t, void*, void*, void*>(fqa, id), encoder(encoder) { removeOutput(); }
-    Seesaw_RotaryEncoder(uint8_t encoder, const i2cip_fqa_t& fqa) : Seesaw<i2cip_rotaryencoder_t, void*, void*, void*>(fqa), encoder(encoder) { removeOutput(); }
-    Seesaw_RotaryEncoder(const i2cip_fqa_t& fqa) : Seesaw_RotaryEncoder(0, fqa) { }
-    // Seesaw_RotaryEncoder(const i2cip_fqa_t& fqa, const i2cip_id_t& id) : Seesaw_RotaryEncoder((uint8_t)0, fqa, id) { }
+    // RotaryEncoder(uint8_t encoder, const i2cip_fqa_t& fqa, const i2cip_id_t& id) : Seesaw<i2cip_rotaryencoder_t, void*, void*, void*>(fqa, id), encoder(encoder) { removeOutput(); }
+    RotaryEncoder(const i2cip_fqa_t& fqa) : Seesaw(fqa), InputInterface<i2cip_rotaryencoder_t, void*>(this) { }
+    // RotaryEncoder(const i2cip_fqa_t& fqa, const i2cip_id_t& id) : RotaryEncoder((uint8_t)0, fqa, id) { }
 
-    static Device* factory(i2cip_fqa_t fqa) { return (Device*)(new Seesaw_RotaryEncoder(fqa)); }
-    
-    i2cip_errorlevel_t set(void* const& value, void* const& args) override { return I2CIP_ERR_HARD; } // You're clearly new here
+    static Device* factory(i2cip_fqa_t fqa) { return (Device*)(new RotaryEncoder(fqa)); }
 
     i2cip_errorlevel_t get(i2cip_rotaryencoder_t& value, void* const& args) override;
-};
 
-#include <Seesaw.tpp>
+    i2cip_errorlevel_t begin(bool setbus = true) override; // virtual Device::begin
+    static i2cip_errorlevel_t _begin(const i2cip_fqa_t& fqa, bool setbus);
+};
 
 #endif
