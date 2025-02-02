@@ -248,8 +248,8 @@ extern struct i2cip_rotaryencoder_s {
 typedef struct i2cip_rotaryencoder_s i2cip_rotaryencoder_t;
 
 class RotaryEncoder : public Seesaw, public InputInterface<i2cip_rotaryencoder_t, void*> {
-  I2CIP_INPUT_USE_TOSTRING(i2cip_rotaryencoder_t, "\"button\":%c,\"encoder\":%d");
-  I2CIP_INPUT_ADD_PRINTCACHE(i2cip_rotaryencoder_t, "Button: %c, Encoder: %d");
+  I2CIP_INPUT_USE_TOSTRING(i2cip_rotaryencoder_t, "\"button\":%d,\"encoder\":%d");
+  I2CIP_INPUT_ADD_PRINTCACHE(i2cip_rotaryencoder_t, "Button: %d, Encoder: %d");
   I2CIP_INPUT_USE_RESET(i2cip_rotaryencoder_t, void*, void* const);
   public:
     // RotaryEncoder(uint8_t encoder, const i2cip_fqa_t& fqa, const i2cip_id_t& id) : Seesaw<i2cip_rotaryencoder_t, void*, void*, void*>(fqa, id), encoder(encoder) { removeOutput(); }
